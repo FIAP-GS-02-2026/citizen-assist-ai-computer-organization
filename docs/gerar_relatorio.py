@@ -144,6 +144,8 @@ def main():
           Spacer(1, 1.3 * cm),
           p(f"Protótipo: ESP32 simulado no Wokwi · painel web com MQTT · previsão com regressão linear<br/>"
             f"Projeto no Wokwi: https://wokwi.com/projects/480962115318032385<br/>"
+            f"Repositório: https://github.com/FIAP-GS-02-2026/citizen-assist-ai-computer-organization<br/>"
+            f"Vídeo de demonstração: https://youtu.be/lUodChs_Yjc<br/>"
             f"São Paulo, {date.today().strftime('%d/%m/%Y')}",
             ParagraphStyle("t4", parent=CORPO, alignment=TA_CENTER, fontSize=9)),
           PageBreak()]
