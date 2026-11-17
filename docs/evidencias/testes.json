@@ -1,0 +1,63 @@
+{
+  "medidas": {
+    "chip": "ESP32-D0WDQ6-V3",
+    "nucleos": 2,
+    "clock_mhz": 240,
+    "heap_boot_bytes": 270312,
+    "heap_rede_bytes": 214660,
+    "flash_kb": 4096,
+    "sketch_kb": 943
+  },
+  "testes": [
+    {
+      "teste": "T1 - Chegadas (botão verde, GPIO 15)",
+      "entrada": "3 toques no botão de chegada com a fila vazia",
+      "esperado": "fila 0 → 1 → 2 → 3, uma chegada por toque; LCD, LED verde e MQTT atualizados",
+      "observado": "fila 0 → 1 → 2 → 3 (ciclos 829, 941, 1057); espera IA 2,0 / 6,8 / 11,7 min vs. média 4,2 / 8,3 / 12,5 min",
+      "situacao": "Aprovado"
+    },
+    {
+      "teste": "T2 - Conclusão de atendimento (botão azul, GPIO 13)",
+      "entrada": "2 toques no botão de atendimento com fila 3",
+      "esperado": "fila 3 → 2 → 1; duração registrada atualiza médias recente e histórica",
+      "observado": "atendimentos de 8,0 e 3,7 min; recente 8,02 → 5,85; histórica 4,36 → 4,33; fila 3 → 2 → 1",
+      "situacao": "Aprovado"
+    },
+    {
+      "teste": "T4 - Nova chegada e atendimento longo",
+      "entrada": "1 chegada com fila 1, depois atendimento de ~10 min",
+      "esperado": "fila 1 → 2 → 1; atendimento longo eleva a média recente e a espera prevista pela IA",
+      "observado": "fila 1 → 2 (IA 8,0 min); atendimento de 10,7 min; recente 7,46 e histórica 4,60",
+      "situacao": "Aprovado"
+    },
+    {
+      "teste": "T3 - Saída com fila vazia (erro tratado)",
+      "entrada": "esvaziar a fila e tocar mais uma vez no botão de atendimento",
+      "esperado": "contador permanece em 0; evento SAIDA_FILA_VAZIA; LED vermelho pisca; operação inválida contada",
+      "observado": "fila 1 → 0 e, no toque extra, SAIDA_FILA_VAZIA (ciclo 3200); LED vermelho piscou; LCD manteve 00",
+      "situacao": "Aprovado"
+    }
+  ],
+  "extras": [
+    {
+      "teste": "Botão virtual 'Concluir atendimento' com fila vazia",
+      "observado": "comando MQTT recebido pelo ESP32 e recusado (SAIDA_FILA_VAZIA, origem=web); painel passou de 1 para 2 operações inválidas",
+      "situacao": "Aprovado"
+    },
+    {
+      "teste": "Botões virtuais 'Registrar chegada' e 'Concluir atendimento'",
+      "observado": "fila 0 → 1 (IA 2,7 min) → 0; atendimento de 4,8 min; concluídos 4 → 5; ida e volta painel → broker → ESP32 → painel em poucos segundos",
+      "situacao": "Aprovado"
+    },
+    {
+      "teste": "Funcionamento local sem rede",
+      "observado": "o Wi-Fi conecta em segundo plano; a fila, o LCD e os LEDs funcionam antes da conexão, e o log indica 'offline (estado mantido localmente)'",
+      "situacao": "Aprovado"
+    },
+    {
+      "teste": "Comando enviado com o ESP32 desconectado",
+      "observado": "com QoS 0, um comando enviado enquanto a simulação estava pausada foi perdido; documentado como limitação de conectividade",
+      "situacao": "Limitação"
+    }
+  ]
+}

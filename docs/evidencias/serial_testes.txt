@@ -1,0 +1,88 @@
+Monitor serial do Wokwi - execucao oficial dos testes (17/11/2026, ESP32 simulado)
+Firmware com interrupcao CHANGE + debounce de 50 ms por estado estavel.
+Escala de demonstracao: 1 s real = 1 min do posto.
+--------------------------------------------------------------------------------
+[INFO] Citizen Assist AI - Fila Virtual (posto Bilhete Unico)
+[INFO] CPU ESP32-D0WDQ6-V3 rev300 | 2 nucleos | Clock 240 MHz
+[INFO] Flash 4096 KB | Sketch 943 KB | Heap livre 270312 bytes
+[INFO] RAM do log de eventos: 64 x 16 bytes = 1024 bytes
+[INFO] Modelo IA: b0=-2.813 b1=3.342 b2=0.356 | media historica inicial=4.17 min
+[NET] Wi-Fi: conectando a Wokwi-GUEST (em segundo plano)
+[INFO] Sistema pronto. Botao VERDE = chegada | Botao AZUL = atendimento concluido
+[NET] Wi-Fi OK | IP 10.10.0.2 | RSSI -91 dBm
+[NET] Conectando ao broker MQTT broker.hivemq.com:1883 ... OK
+[NET] NTP sincronizado: 2026-11-17 15:01:53
+
+=== T1: 3 chegadas (botao verde) ===
+[CICLO 829]
+[DATA] Entrada CHEGADA (GPIO 15)
+[LOGIC] fila 0 -> 1 | espera IA=2.0 min | media=4.2 min
+[EVENT] 2026-11-17 15:01:58 | CHEGADA | origem=botao | fila=1 | ciclo=829
+[ACTION] LCD fila=1 | LED VERDE | MQTT estado publicado
+[CICLO 941]
+[DATA] Entrada CHEGADA (GPIO 15)
+[LOGIC] fila 1 -> 2 | espera IA=6.8 min | media=8.3 min
+[EVENT] 2026-11-17 15:01:59 | CHEGADA | origem=botao | fila=2 | ciclo=941
+[ACTION] LCD fila=2 | LED VERDE | MQTT estado publicado
+[CICLO 1057]
+[DATA] Entrada CHEGADA (GPIO 15)
+[LOGIC] fila 2 -> 3 | espera IA=11.7 min | media=12.5 min
+[EVENT] 2026-11-17 15:02:00 | CHEGADA | origem=botao | fila=3 | ciclo=1057
+[ACTION] LCD fila=3 | LED VERDE | MQTT estado publicado
+
+=== T2: conclusoes de atendimento (botao azul) ===
+[CICLO 1582]
+[DATA] Entrada ATENDIMENTO CONCLUIDO (GPIO 13)
+[LOGIC] atendimento durou 8.0 min | recente=8.02 | historica=4.36 | fila 3 -> 2
+[EVENT] 2026-11-17 15:02:06 | CONCLUSAO | origem=botao | fila=2 | ciclo=1582
+[ACTION] LCD fila=2 | LED VERDE | MQTT estado publicado
+[CICLO 1937]
+[DATA] Entrada ATENDIMENTO CONCLUIDO (GPIO 13)
+[LOGIC] atendimento durou 3.7 min | recente=5.85 | historica=4.33 | fila 2 -> 1
+[EVENT] 2026-11-17 15:02:10 | CONCLUSAO | origem=botao | fila=1 | ciclo=1937
+[ACTION] LCD fila=1 | LED VERDE | MQTT estado publicado
+
+=== T4: nova chegada e atendimento longo ===
+[NET] Conectando ao broker MQTT broker.hivemq.com:1883 ... OK
+[CICLO 2035]
+[DATA] Entrada CHEGADA (GPIO 15)
+[LOGIC] fila 1 -> 2 | espera IA=8.0 min | media=8.7 min
+[EVENT] 2026-11-17 15:02:11 | CHEGADA | origem=botao | fila=2 | ciclo=2035
+[ACTION] LCD fila=2 | LED VERDE | MQTT estado publicado
+[NET] Conectando ao broker MQTT broker.hivemq.com:1883 ... OK
+[CICLO 2897]
+[DATA] Entrada ATENDIMENTO CONCLUIDO (GPIO 13)
+[LOGIC] atendimento durou 10.7 min | recente=7.46 | historica=4.60 | fila 2 -> 1
+[EVENT] 2026-11-17 15:02:20 | CONCLUSAO | origem=botao | fila=1 | ciclo=2897
+[ACTION] LCD fila=1 | LED VERDE | MQTT estado publicado
+
+=== T3: esvaziar a fila e tentar saida com fila vazia ===
+[CICLO 3045]
+[DATA] Entrada ATENDIMENTO CONCLUIDO (GPIO 13)
+[LOGIC] atendimento durou 1.6 min | recente=6.00 | historica=4.48 | fila 1 -> 0
+[EVENT] 2026-11-17 15:02:22 | CONCLUSAO | origem=botao | fila=0 | ciclo=3045
+[ACTION] LCD fila=0 | LED VERDE | MQTT estado publicado
+[CICLO 3200]
+[DATA] Entrada ATENDIMENTO CONCLUIDO (GPIO 13)
+[LOGIC] fila=0 -> saida com fila vazia: operacao invalida, contador nao muda
+[EVENT] 2026-11-17 15:02:24 | SAIDA_FILA_VAZIA | origem=botao | fila=0 | ciclo=3200
+[ACTION] LED vermelho pisca | LCD mantem fila=00
+[ACTION] LCD fila=0 | LED VERDE | MQTT estado publicado
+
+=== Extras: botoes virtuais do painel web (comando via MQTT) ===
+[NET] comando recebido: atendimento
+[DATA] Entrada ATENDIMENTO CONCLUIDO (painel web)
+[LOGIC] fila=0 -> saida com fila vazia: operacao invalida, contador nao muda
+[EVENT] 2026-11-17 15:03:38 | SAIDA_FILA_VAZIA | origem=web | fila=0 | ciclo=10451
+[ACTION] LED vermelho pisca | LCD mantem fila=00
+[ACTION] LCD fila=0 | LED VERDE | MQTT estado publicado
+[NET] comando recebido: chegada
+[DATA] Entrada CHEGADA (painel web)
+[LOGIC] fila 0 -> 1 | espera IA=2.7 min | media=4.5 min
+[EVENT] 2026-11-17 15:03:43 | CHEGADA | origem=web | fila=1 | ciclo=10921
+[ACTION] LCD fila=1 | LED VERDE | MQTT estado publicado
+[NET] comando recebido: atendimento
+[DATA] Entrada ATENDIMENTO CONCLUIDO (painel web)
+[LOGIC] atendimento durou 4.8 min | recente=5.77 | historica=4.49 | fila 1 -> 0
+[EVENT] 2026-11-17 15:03:47 | CONCLUSAO | origem=web | fila=0 | ciclo=11391
+[ACTION] LCD fila=0 | LED VERDE | MQTT estado publicado
