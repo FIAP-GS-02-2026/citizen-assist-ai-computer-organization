@@ -13,6 +13,8 @@ Um ESP32, simulado no Wokwi, registra a chegada de cidadãos e a conclusão de a
 (interrupção), impede contagens negativas, guarda os eventos com horário, estima o tempo de espera com
 regressão linear e envia tudo por Wi-Fi/MQTT para um painel web aberto no navegador.
 
+**Vídeo de demonstração:** https://youtu.be/lUodChs_Yjc · **Projeto no Wokwi:** https://wokwi.com/projects/480962115318032385
+
 ![Arquitetura](docs/diagrama_arquitetura.png)
 
 ## Estrutura
