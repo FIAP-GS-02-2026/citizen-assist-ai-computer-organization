@@ -24,17 +24,17 @@
       "situacao": "Aprovado"
     },
     {
-      "teste": "T4 - Nova chegada e atendimento longo",
-      "entrada": "1 chegada com fila 1, depois atendimento de ~10 min",
-      "esperado": "fila 1 → 2 → 1; atendimento longo eleva a média recente e a espera prevista pela IA",
-      "observado": "fila 1 → 2 (IA 8,0 min); atendimento de 10,7 min; recente 7,46 e histórica 4,60",
-      "situacao": "Aprovado"
-    },
-    {
-      "teste": "T3 - Saída com fila vazia (erro tratado)",
+      "teste": "T3 - Tentativa de saída com fila vazia",
       "entrada": "esvaziar a fila e tocar mais uma vez no botão de atendimento",
       "esperado": "contador permanece em 0; evento SAIDA_FILA_VAZIA; LED vermelho pisca; operação inválida contada",
       "observado": "fila 1 → 0 e, no toque extra, SAIDA_FILA_VAZIA (ciclo 3200); LED vermelho piscou; LCD manteve 00",
+      "situacao": "Aprovado"
+    },
+    {
+      "teste": "T4 - Atualização da estimativa de espera",
+      "entrada": "nova chegada com fila 1 e, depois, um atendimento longo (~10 min)",
+      "esperado": "estimativas recalculadas a cada evento; atendimento longo eleva a média recente e a espera prevista pela IA",
+      "observado": "fila 1 → 2: IA 8,0 min vs. média 8,7 min; atendimento de 10,7 min elevou a média recente para 7,46 min e a histórica para 4,60 min",
       "situacao": "Aprovado"
     }
   ],

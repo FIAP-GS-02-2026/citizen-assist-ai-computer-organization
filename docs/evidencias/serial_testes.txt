@@ -42,7 +42,7 @@ Escala de demonstracao: 1 s real = 1 min do posto.
 [EVENT] 2026-11-17 15:02:10 | CONCLUSAO | origem=botao | fila=1 | ciclo=1937
 [ACTION] LCD fila=1 | LED VERDE | MQTT estado publicado
 
-=== T4: nova chegada e atendimento longo ===
+=== T4: atualizacao da estimativa (nova chegada e atendimento longo) ===
 [NET] Conectando ao broker MQTT broker.hivemq.com:1883 ... OK
 [CICLO 2035]
 [DATA] Entrada CHEGADA (GPIO 15)
@@ -56,7 +56,7 @@ Escala de demonstracao: 1 s real = 1 min do posto.
 [EVENT] 2026-11-17 15:02:20 | CONCLUSAO | origem=botao | fila=1 | ciclo=2897
 [ACTION] LCD fila=1 | LED VERDE | MQTT estado publicado
 
-=== T3: esvaziar a fila e tentar saida com fila vazia ===
+=== T3: esvaziar a fila e tentar saida com fila vazia (executado apos o T4) ===
 [CICLO 3045]
 [DATA] Entrada ATENDIMENTO CONCLUIDO (GPIO 13)
 [LOGIC] atendimento durou 1.6 min | recente=6.00 | historica=4.48 | fila 1 -> 0
