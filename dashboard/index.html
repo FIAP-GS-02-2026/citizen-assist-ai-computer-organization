@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Citizen Assist AI - Fila Virtual do Posto Bilhete Único</title>
+<!--
+  Global Solution 2026.2 - Computer Organization and Architecture - FIAP
+  Integrantes: Gabriel Fagundes (RM 569074), Glauco Kelly (RM 572840), Thiago Renatino (RM 569073)
+
+  Painel web da fila virtual. Recebe o estado do ESP32 por MQTT sobre WebSocket
+  (broker público HiveMQ) e envia os botões virtuais de volta ao ESP32.
+  Basta abrir este arquivo no navegador: não precisa de servidor.
+-->
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<style>
+  :root {
+    --fundo: #f4f6f8; --cartao: #ffffff; --texto: #1d2733; --suave: #5b6878;
+    --borda: #dde3ea; --azul: #1f5fa8; --verde: #1e8e5a; --vermelho: #c0392b; --laranja: #d9822b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --fundo: #11161c; --cartao: #1a2129; --texto: #e8edf2; --suave: #9aa7b5; --borda: #2a333d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background: var(--fundo); color: var(--texto); }
+  header { padding: 20px 24px 8px; }
+  header h1 { margin: 0; font-size: 1.35rem; }
+  header p { margin: 4px 0 0; color: var(--suave); font-size: .92rem; }
+  main { padding: 12px 24px 32px; display: grid; gap: 16px; max-width: 1100px; }
+  .linha { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .cartao { background: var(--cartao); border: 1px solid var(--borda); border-radius: 12px; padding: 16px 18px; }
+  .rotulo { color: var(--suave); font-size: .85rem; margin: 0 0 6px; }
+  .valor { font-size: 2.6rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .unidade { font-size: 1rem; font-weight: 500; color: var(--suave); margin-left: 4px; }
+  .detalhe { color: var(--suave); font-size: .85rem; margin-top: 6px; }
+  .status { display: inline-flex; align-items: center; gap: 8px; font-size: .88rem; }
+  .ponto { width: 10px; height: 10px; border-radius: 50%; background: var(--laranja); }
+  .ponto.ok { background: var(--verde); } .ponto.erro { background: var(--vermelho); }
+  .alerta { color: var(--vermelho); }
+  .botoes { display: flex; gap: 12px; flex-wrap: wrap; }
+  button { font: inherit; font-size: 1rem; padding: 12px 18px; border-radius: 10px; border: 0;
+           cursor: pointer; color: #fff; min-height: 48px; }
+  button:focus-visible { outline: 3px solid var(--azul); outline-offset: 2px; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .b-chegada { background: var(--verde); } .b-atendimento { background: var(--azul); }
+  table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--borda); }
+  th { color: var(--suave); font-weight: 600; }
+  td.num { font-variant-numeric: tabular-nums; }
+  .tag { padding: 2px 8px; border-radius: 999px; font-size: .78rem; font-weight: 600; }
+  .t-CHEGADA { background: #dff3e8; color: #135c3a; } .t-CONCLUSAO { background: #e0ebf8; color: #173f6e; }
+  .t-SAIDA_FILA_VAZIA, .t-FILA_CHEIA { background: #f8e1de; color: #7d241b; }
+  .barra { height: 10px; border-radius: 6px; background: var(--borda); overflow: hidden; margin-top: 8px; }
+  .barra > div { height: 100%; background: var(--azul); width: 0; transition: width .4s; }
+  footer { color: var(--suave); font-size: .8rem; padding: 0 24px 24px; max-width: 1100px; }
+  .vazio { color: var(--suave); text-align: center; padding: 18px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Fila virtual · Posto de atendimento do Bilhete Único</h1>
+  <p>Citizen Assist AI · dados enviados pelo ESP32 em tempo real ·
+     <span class="status"><span id="ponto" class="ponto"></span><span id="conexao">conectando ao broker…</span></span></p>
+</header>
+
+<main>
+  <section class="linha" aria-label="Indicadores da fila">
+    <div class="cartao">
+      <p class="rotulo">Pessoas na fila</p>
+      <div class="valor" id="fila" aria-live="polite">–</div>
+      <p class="detalhe" id="filaDetalhe">aguardando dados do ESP32</p>
+    </div>
+    <div class="cartao">
+      <p class="rotulo">Espera estimada (IA · regressão linear)</p>
+      <div class="valor"><span id="esperaIa">–</span><span class="unidade">min</span></div>
+      <p class="detalhe">para quem chegar agora</p>
+    </div>
+    <div class="cartao">
+      <p class="rotulo">Espera estimada (média histórica)</p>
+      <div class="valor"><span id="esperaMedia">–</span><span class="unidade">min</span></div>
+      <p class="detalhe" id="mediaDetalhe">fila × tempo médio histórico</p>
+    </div>
+    <div class="cartao">
+      <p class="rotulo">Atendimentos concluídos</p>
+      <div class="valor" id="concluidos">–</div>
+      <p class="detalhe" id="invalidas">operações inválidas recusadas: –</p>
+    </div>
+  </section>
+
+  <section class="cartao" aria-label="Botões virtuais">
+    <p class="rotulo">Botões virtuais (mesma função dos botões físicos do ESP32)</p>
+    <div class="botoes">
+      <button class="b-chegada" id="btnChegada" disabled>+ Registrar chegada</button>
+      <button class="b-atendimento" id="btnAtendimento" disabled>✓ Concluir atendimento</button>
+    </div>
+    <p class="detalhe">Os comandos vão ao ESP32 pelo tópico <code>…/comando</code>. Quem valida (por exemplo, recusar
+       saída com fila vazia) é o próprio ESP32.</p>
+  </section>
+
+  <section class="linha">
+    <div class="cartao">
+      <p class="rotulo">Tempos de atendimento (min)</p>
+      <p class="detalhe" style="margin-top:0">Últimos 5 atendimentos: <strong id="recente">–</strong> ·
+         Média histórica: <strong id="historica">–</strong></p>
+      <p class="rotulo" style="margin-top:14px">Diferença entre as estimativas</p>
+      <div class="barra" aria-hidden="true"><div id="barraDif"></div></div>
+      <p class="detalhe" id="difTexto">–</p>
+    </div>
+    <div class="cartao">
+      <p class="rotulo">Dispositivo (ESP32)</p>
+      <p class="detalhe" style="margin-top:0">Horário: <strong id="horario">–</strong><br>
+         Ciclos do loop: <strong id="ciclo">–</strong> · Ligado há: <strong id="uptime">–</strong><br>
+         Heap livre: <strong id="heap">–</strong></p>
+    </div>
+  </section>
+
+  <section class="cartao" aria-label="Registro de eventos">
+    <p class="rotulo">Registro de eventos (mais recentes primeiro)</p>
+    <table>
+      <thead><tr><th>Horário (ESP32)</th><th>Evento</th><th>Origem</th><th>Fila</th><th>Espera IA</th><th>Ciclo</th></tr></thead>
+      <tbody id="eventos"><tr><td colspan="6" class="vazio">Nenhum evento ainda</td></tr></tbody>
+    </table>
+  </section>
+</main>
+
+<footer>
+  Modo demonstração: 1 segundo real equivale a 1 minuto do posto. O modelo de IA foi treinado com dados
+  SIMULADOS (ver ia/). Este painel não é um canal oficial da SPTrans.
+</footer>
+
+<script>
+  // Mesmo tópico do firmware (sketch.ino)
+  const TOPICO_BASE = "fiap/gs2026/citizenassist/fila/posto-bu-01";
+  // Broker público com MQTT sobre WebSocket seguro (o ESP32 usa TCP 1883 no mesmo broker)
+  const BROKER_WS = "wss://broker.hivemq.com:8884/mqtt";
+  const MAX_EVENTOS = 30;
+
+  const $ = id => document.getElementById(id);
+  const fmt = (v, casas = 1) => Number(v).toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
+  const eventos = [];
+
+  function setConexao(texto, classe) {
+    $("conexao").textContent = texto;
+    $("ponto").className = "ponto " + (classe || "");
+    $("btnChegada").disabled = $("btnAtendimento").disabled = classe !== "ok";
+  }
+
+  function mostrarEstado(e) {
+    $("fila").textContent = e.fila;
+    $("fila").classList.toggle("alerta", e.fila >= 8);
+    $("filaDetalhe").textContent = e.fila === 0 ? "guichê livre" : (e.fila >= 8 ? "fila longa: LED vermelho aceso" : "fila normal: LED verde aceso");
+    $("esperaIa").textContent = fmt(e.espera_ia_min);
+    $("esperaMedia").textContent = fmt(e.espera_media_min);
+    $("mediaDetalhe").textContent = `fila × ${fmt(e.media_historica_min, 2)} min`;
+    $("concluidos").textContent = e.concluidos;
+    $("invalidas").textContent = `operações inválidas recusadas: ${e.operacoes_invalidas}`;
+    $("recente").textContent = fmt(e.tempo_medio_recente_min, 2);
+    $("historica").textContent = fmt(e.media_historica_min, 2);
+    const dif = e.espera_media_min - e.espera_ia_min;
+    const maior = Math.max(e.espera_media_min, e.espera_ia_min, 1);
+    $("barraDif").style.width = Math.min(100, Math.abs(dif) / maior * 100) + "%";
+    $("difTexto").textContent = e.fila === 0 ? "fila vazia: as duas estimativas são zero"
+      : `A IA estima ${fmt(Math.abs(dif))} min ${dif >= 0 ? "a menos" : "a mais"} que a média histórica`;
+    $("horario").textContent = e.horario;
+    $("ciclo").textContent = Number(e.ciclo).toLocaleString("pt-BR");
+    $("uptime").textContent = `${Math.floor(e.uptime_s / 60)} min ${e.uptime_s % 60} s`;
+    $("heap").textContent = `${Number(e.heap_livre_bytes).toLocaleString("pt-BR")} bytes`;
+  }
+
+  function mostrarEvento(ev) {
+    eventos.unshift(ev);
+    eventos.length = Math.min(eventos.length, MAX_EVENTOS);
+    $("eventos").innerHTML = eventos.map(x => `
+      <tr><td class="num">${x.horario}</td>
+          <td><span class="tag t-${x.tipo}">${x.tipo.replaceAll("_", " ")}</span></td>
+          <td>${x.origem === "web" ? "painel web" : "botão físico"}</td>
+          <td class="num">${x.fila}</td><td class="num">${fmt(x.espera_ia_min)} min</td>
+          <td class="num">${x.ciclo}</td></tr>`).join("");
+  }
+
+  const cliente = mqtt.connect(BROKER_WS, {
+    clientId: "painel-fila-" + Math.random().toString(16).slice(2, 10),
+    reconnectPeriod: 3000, connectTimeout: 10000,
+  });
+  cliente.on("connect", () => {
+    setConexao("conectado ao broker · aguardando o ESP32", "ok");
+    cliente.subscribe([TOPICO_BASE + "/estado", TOPICO_BASE + "/evento"]);
+    cliente.publish(TOPICO_BASE + "/comando", "estado");  // pede o estado atual
+  });
+  cliente.on("reconnect", () => setConexao("reconectando…"));
+  cliente.on("offline", () => setConexao("sem conexão com o broker", "erro"));
+  cliente.on("error", err => setConexao("erro: " + err.message, "erro"));
+  cliente.on("message", (topico, payload) => {
+    let dados;
+    try { dados = JSON.parse(payload.toString()); } catch { return; }
+    if (topico.endsWith("/estado")) {
+      setConexao("conectado · ESP32 enviando dados", "ok");
+      mostrarEstado(dados);
+    } else if (topico.endsWith("/evento")) {
+      mostrarEvento(dados);
+    }
+  });
+
+  $("btnChegada").onclick = () => cliente.publish(TOPICO_BASE + "/comando", "chegada");
+  $("btnAtendimento").onclick = () => cliente.publish(TOPICO_BASE + "/comando", "atendimento");
+</script>
+</body>
+</html>
