@@ -1,0 +1,51 @@
+{
+  "origem_dos_dados": "SIMULADO",
+  "registros_treino": 2204,
+  "registros_teste": 906,
+  "media_historica_min": 4.1734,
+  "coeficientes": {
+    "b0": -2.813011,
+    "b1_fila": 3.342074,
+    "b2_fila_x_tempo_recente": 0.35646
+  },
+  "convencional": {
+    "MAE_min": 5.327,
+    "RMSE_min": 8.806,
+    "R2": 0.8824,
+    "vies_medio_min": -2.202
+  },
+  "ia_regressao": {
+    "MAE_min": 4.827,
+    "RMSE_min": 7.226,
+    "R2": 0.9208,
+    "vies_medio_min": 0.673
+  },
+  "reducao_mae_pct": 9.4,
+  "erro_por_faixa_de_fila": [
+    {
+      "faixa": "0",
+      "erro_conv": 0.0,
+      "erro_ia": 0.0
+    },
+    {
+      "faixa": "1-2",
+      "erro_conv": 2.38,
+      "erro_ia": 1.84
+    },
+    {
+      "faixa": "3-5",
+      "erro_conv": 3.99,
+      "erro_ia": 3.79
+    },
+    {
+      "faixa": "6-10",
+      "erro_conv": 6.63,
+      "erro_ia": 6.54
+    },
+    {
+      "faixa": "11+",
+      "erro_conv": 12.74,
+      "erro_ia": 11.01
+    }
+  ]
+}
