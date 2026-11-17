@@ -92,6 +92,14 @@ Os quatro testes do enunciado (chegada, conclusão, saída com fila vazia e atua
 estão registrados com entradas, resultado esperado e resultado observado no relatório técnico
 (`docs/relatorio_tecnico_fila_virtual.pdf`).
 
+## Solução de problemas
+
+- **"WiFi Error: Connection to IoT Gateway failed" no Wokwi:** a rede ou uma extensão do navegador bloqueou o
+  gateway de internet do Wokwi. Reinicie a simulação, desative bloqueadores/VPN para wokwi.com ou use outra rede.
+  A fila, o LCD e os LEDs continuam funcionando sem Wi-Fi; só o painel web deixa de receber dados.
+- **Painel em "aguardando dados":** confirme no Serial Monitor as linhas `Wi-Fi OK`, `MQTT ... OK` e
+  `NTP sincronizado`, e mantenha a aba do Wokwi visível (o simulador desacelera em segundo plano).
+
 ## Limitações
 
 - Broker MQTT público, sem autenticação: adequado a protótipo, não a produção.
