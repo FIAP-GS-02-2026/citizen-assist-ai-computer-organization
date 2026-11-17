@@ -386,8 +386,8 @@ def main():
     s.append(p("6.3 Operações de entrada, processamento e saída", H2))
     s.append(com_legenda(tabela([
         ["Operação", "Dispositivo / interface", "Como a CPU acessa"],
-        ["Entrada digital", "Botões nos GPIO 15 e 13", "Interrupção por borda de descida; ISR em IRAM; dado "
-                                                       "repassado ao loop por variável volatile."],
+        ["Entrada digital", "Botões nos GPIO 15 e 13", "Interrupção a cada mudança de nível (CHANGE); ISR em IRAM; "
+                                                       "debounce de 50 ms confirma o toque no loop."],
         ["Entrada pela rede", "Comando MQTT", "Polling do cliente MQTT no loop; callback ao chegar mensagem."],
         ["Processamento", "ULA e FPU do Xtensa LX6", "Comparações (fila = 0? fila ≥ 99?), soma e subtração da "
                                                      "fila, médias e regressão."],

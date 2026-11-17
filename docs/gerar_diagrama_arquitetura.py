@@ -67,14 +67,14 @@ def main():
     caixa(ax, 0.2, 5.6, 2.9, 2.4, "ENTRADAS", [
         "Botão VERDE · chegada", "GPIO 15 · pull-up interno",
         "Botão AZUL · atendimento", "GPIO 13 · pull-up interno",
-        "Borda de descida → interrupção"], "entrada")
+        "Mudança de nível → interrupção"], "entrada")
     caixa(ax, 0.2, 2.6, 2.9, 2.3, "ENTRADAS VIRTUAIS", [
         "Botões do painel web", "comando MQTT:", "\"chegada\" / \"atendimento\"",
         "mesma validação do ESP32"], "entrada")
 
     # CONTROLADOR GPIO
     caixa(ax, 3.6, 5.85, 2.3, 1.9, "GPIO + Controlador", [
-        "de interrupções", "ISR em IRAM (IRAM_ATTR)", "debounce 250 ms",
+        "de interrupções", "ISR em IRAM (IRAM_ATTR)", "debounce 50 ms",
         "flag volatile → loop()"], "cpu", 9.6)
 
     # CPU
